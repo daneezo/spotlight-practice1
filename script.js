@@ -83,7 +83,17 @@ const employees = [
 
 const employeeGrid = document.getElementById('employee-grid');
 const searchInput = document.getElementById('search-input');
+const departmentFilter = document.getElementById('department-filter');
 const noResults = document.getElementById('no-results');
+
+// Populate department dropdown from employee data
+const departments = [...new Set(employees.map(emp => emp.department))].sort();
+departments.forEach(dept => {
+  const option = document.createElement('option');
+  option.value = dept;
+  option.textContent = dept;
+  departmentFilter.appendChild(option);
+});
 
 function renderEmployees(employeeList) {
   if (employeeList.length === 0) {
@@ -108,23 +118,25 @@ function renderEmployees(employeeList) {
   `).join('');
 }
 
-function filterEmployees(searchTerm) {
+function filterEmployees(searchTerm, department) {
   const term = searchTerm.toLowerCase().trim();
 
-  if (!term) {
-    return employees;
-  }
-
-  return employees.filter(emp =>
-    emp.name.toLowerCase().includes(term) ||
-    emp.department.toLowerCase().includes(term)
-  );
+  return employees.filter(emp => {
+    const matchesSearch = !term ||
+      emp.name.toLowerCase().includes(term) ||
+      emp.department.toLowerCase().includes(term);
+    const matchesDept = !department || emp.department === department;
+    return matchesSearch && matchesDept;
+  });
 }
 
-searchInput.addEventListener('input', (e) => {
-  const filtered = filterEmployees(e.target.value);
+function applyFilters() {
+  const filtered = filterEmployees(searchInput.value, departmentFilter.value);
   renderEmployees(filtered);
-});
+}
+
+searchInput.addEventListener('input', applyFilters);
+departmentFilter.addEventListener('change', applyFilters);
 
 // Initial render
 renderEmployees(employees);
