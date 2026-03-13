@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Directory</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <h1>Employee Directory</h1>
+    <div class="search-container">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Search by name or department..."
+        aria-label="Search employees"
+      >
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="employee-grid" class="employee-grid"></div>
+    <p id="no-results" class="no-results" hidden>No employees found</p>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
