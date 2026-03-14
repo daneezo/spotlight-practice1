@@ -1,99 +1,80 @@
-const employees = [
-  {
-    id: 1,
-    name: "Jane Smith",
-    department: "Engineering",
-    title: "Senior Developer",
-    email: "jane.smith@company.com",
-    phone: "(555) 123-4567",
-    location: "New York",
-    photo: "https://i.pravatar.cc/150?img=1"
-  },
-  {
-    id: 2,
-    name: "Michael Johnson",
-    department: "Engineering",
-    title: "Tech Lead",
-    email: "michael.j@company.com",
-    phone: "(555) 234-5678",
-    location: "San Francisco",
-    photo: "https://i.pravatar.cc/150?img=3"
-  },
-  {
-    id: 3,
-    name: "Emily Davis",
-    department: "Marketing",
-    title: "Marketing Manager",
-    email: "emily.davis@company.com",
-    phone: "(555) 345-6789",
-    location: "Chicago",
-    photo: "https://i.pravatar.cc/150?img=5"
-  },
-  {
-    id: 4,
-    name: "David Wilson",
-    department: "Sales",
-    title: "Account Executive",
-    email: "david.wilson@company.com",
-    phone: "(555) 456-7890",
-    location: "Boston",
-    photo: "https://i.pravatar.cc/150?img=8"
-  },
-  {
-    id: 5,
-    name: "Sarah Brown",
-    department: "Human Resources",
-    title: "HR Director",
-    email: "sarah.brown@company.com",
-    phone: "(555) 567-8901",
-    location: "Austin",
-    photo: "https://i.pravatar.cc/150?img=9"
-  },
-  {
-    id: 6,
-    name: "James Garcia",
-    department: "Engineering",
-    title: "DevOps Engineer",
-    email: "james.garcia@company.com",
-    phone: "(555) 678-9012",
-    location: "Seattle",
-    photo: "https://i.pravatar.cc/150?img=11"
-  },
-  {
-    id: 7,
-    name: "Lisa Martinez",
-    department: "Finance",
-    title: "Financial Analyst",
-    email: "lisa.martinez@company.com",
-    phone: "(555) 789-0123",
-    location: "Denver",
-    photo: "https://i.pravatar.cc/150?img=16"
-  },
-  {
-    id: 8,
-    name: "Robert Taylor",
-    department: "Marketing",
-    title: "Content Strategist",
-    email: "robert.taylor@company.com",
-    phone: "(555) 890-1234",
-    location: "Miami",
-    photo: "https://i.pravatar.cc/150?img=12"
-  }
-];
+// We store fetched employee data here so filter functions can access it.
+// This replaces the old hardcoded array — data now comes from the API.
+let employees = [];
+
+// FIX #1 (XSS): Escape user-facing strings before injecting into innerHTML.
+// Without this, any HTML or <script> tags in API data (e.g. a name like
+// '<img onerror="alert(1)">') would execute as real markup in the browser,
+// allowing attackers to steal cookies or hijack sessions.
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 const employeeGrid = document.getElementById('employee-grid');
 const searchInput = document.getElementById('search-input');
 const departmentFilter = document.getElementById('department-filter');
 const noResults = document.getElementById('no-results');
 
-// Populate department dropdown from employee data
-const departments = [...new Set(employees.map(emp => emp.department))].sort();
-departments.forEach(dept => {
-  const option = document.createElement('option');
-  option.value = dept;
-  option.textContent = dept;
-  departmentFilter.appendChild(option);
-});
+// FIX #3 (Hardcoded URL): Extract the API base URL into a constant so it can
+// be changed in one place. The hardcoded 'http://localhost:3000' would break
+// in any deployed environment. This makes it easy to swap per environment.
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : '';
+
+// Fetch employee data from the Rails API.
+//
+// We use the Fetch API to make a GET request to our Rails backend.
+// fetch() returns a Promise, so we chain .then() calls to handle the response.
+//
+// CORS (Cross-Origin Resource Sharing) is required here because the frontend
+// (served on one port, e.g., file:// or localhost:5500) is making a request to
+// the Rails API on a different origin (localhost:3000). Browsers block these
+// cross-origin requests by default for security. The Rails backend must include
+// the appropriate Access-Control-Allow-Origin header in its response to permit
+// the frontend to read the data. Without CORS configured on the server, the
+// browser will reject the response even though the server sent it successfully.
+
+// FIX #2 (Loading state): Show a loading message so users know data is being
+// fetched. Without this, the page is blank during the network request, which
+// looks broken on slow connections.
+employeeGrid.innerHTML = '<p class="loading-message">Loading employees...</p>';
+
+fetch(`${API_BASE}/api/employees`)
+  .then(response => {
+    // response.ok is true for HTTP status codes 200–299.
+    // If the server returns an error status (4xx, 5xx), fetch does NOT reject
+    // the promise — we have to check manually and throw to trigger .catch().
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+    // Parse the JSON body from the response. This also returns a Promise.
+    return response.json();
+  })
+  .then(data => {
+    employees = data;
+
+    // Populate department dropdown from employee data
+    const departments = [...new Set(employees.map(emp => emp.department))].sort();
+    departments.forEach(dept => {
+      const option = document.createElement('option');
+      option.value = dept;
+      option.textContent = dept;
+      departmentFilter.appendChild(option);
+    });
+
+    // Initial render once data is loaded
+    renderEmployees(employees);
+  })
+  .catch(error => {
+    // Network failures (server down, DNS error) and the manual throw above
+    // both land here. We log the error and show a message to the user.
+    console.error('Failed to fetch employees:', error);
+    employeeGrid.innerHTML =
+      '<p class="error-message">Unable to load employee data. Please try again later.</p>';
+  });
 
 function renderEmployees(employeeList) {
   if (employeeList.length === 0) {
@@ -103,16 +84,19 @@ function renderEmployees(employeeList) {
   }
 
   noResults.hidden = true;
+  // FIX #5 (Null guards): Default missing fields to empty strings so a null
+  // or undefined value doesn't render as the literal text "null" on the card,
+  // and doesn't throw a TypeError when we call escapeHTML on it.
   employeeGrid.innerHTML = employeeList.map(emp => `
     <div class="employee-card">
-      <img src="${emp.photo}" alt="${emp.name}" class="employee-photo">
-      <h2 class="employee-name">${emp.name}</h2>
-      <p class="employee-title">${emp.title}</p>
-      <span class="employee-department">${emp.department}</span>
+      <img src="${escapeHTML(emp.photo ?? '')}" alt="${escapeHTML(emp.name ?? '')}" class="employee-photo">
+      <h2 class="employee-name">${escapeHTML(emp.name ?? '')}</h2>
+      <p class="employee-title">${escapeHTML(emp.title ?? '')}</p>
+      <span class="employee-department">${escapeHTML(emp.department ?? '')}</span>
       <div class="employee-contact">
-        <p>${emp.email}</p>
-        <p>${emp.phone}</p>
-        <p>${emp.location}</p>
+        <p>${escapeHTML(emp.email ?? '')}</p>
+        <p>${escapeHTML(emp.phone ?? '')}</p>
+        <p>${escapeHTML(emp.location ?? '')}</p>
       </div>
     </div>
   `).join('');
@@ -121,10 +105,14 @@ function renderEmployees(employeeList) {
 function filterEmployees(searchTerm, department) {
   const term = searchTerm.toLowerCase().trim();
 
+  // FIX #5 (Null guards): Use nullish coalescing so a missing name or
+  // department doesn't throw a TypeError on .toLowerCase(). APIs evolve —
+  // treating external data as potentially incomplete prevents one bad record
+  // from crashing the entire page.
   return employees.filter(emp => {
     const matchesSearch = !term ||
-      emp.name.toLowerCase().includes(term) ||
-      emp.department.toLowerCase().includes(term);
+      (emp.name ?? '').toLowerCase().includes(term) ||
+      (emp.department ?? '').toLowerCase().includes(term);
     const matchesDept = !department || emp.department === department;
     return matchesSearch && matchesDept;
   });
@@ -135,8 +123,17 @@ function applyFilters() {
   renderEmployees(filtered);
 }
 
-searchInput.addEventListener('input', applyFilters);
-departmentFilter.addEventListener('change', applyFilters);
+// FIX #4 (Debounce): Wait until the user pauses typing before filtering.
+// Without this, every keystroke rebuilds the entire DOM via innerHTML, which
+// causes visible lag with large datasets. 250ms is short enough to feel instant
+// but long enough to avoid unnecessary work mid-word.
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
 
-// Initial render
-renderEmployees(employees);
+searchInput.addEventListener('input', debounce(applyFilters, 250));
+departmentFilter.addEventListener('change', applyFilters);
