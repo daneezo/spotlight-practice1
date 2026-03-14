@@ -26,7 +26,8 @@ blocks:
       # checkout fetches the repository at the current commit.
       prologue:
         commands:
-          - checkout  # Semaphore built-in: clones the repo and checks out the triggering commit
+          # Semaphore built-in: clones the repo and checks out the triggering commit
+          - checkout
 
       # Each job runs independently. We use a single job here to
       # check that all required files are present.
@@ -34,8 +35,8 @@ blocks:
         - name: Check project files exist
           commands:
             # Verify each required file exists; exit with an error if any is missing.
-            - test -f index.html  || { echo "ERROR: index.html is missing"; exit 1; }
-            - test -f script.js   || { echo "ERROR: script.js is missing";  exit 1; }
-            - test -f styles.css  || { echo "ERROR: styles.css is missing"; exit 1; }
-            - test -f CLAUDE.md   || { echo "ERROR: CLAUDE.md is missing";  exit 1; }
+            - 'test -f index.html  || { echo "ERROR: index.html is missing"; exit 1; }'
+            - 'test -f script.js   || { echo "ERROR: script.js is missing";  exit 1; }'
+            - 'test -f styles.css  || { echo "ERROR: styles.css is missing"; exit 1; }'
+            - 'test -f CLAUDE.md   || { echo "ERROR: CLAUDE.md is missing";  exit 1; }'
             - echo "All required files are present."
