@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Employee Directory</title>
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Honeybadger error tracking -->
+  <!-- Load the Honeybadger JS client (v6.12) from their CDN -->
+  <!-- Explicit https:// is required when running as a local file since there is no protocol to inherit -->
+  <script src="https://js.honeybadger.io/v6.12/honeybadger.min.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    // Initialize Honeybadger with project API key and environment label
+    // This captures uncaught exceptions and unhandled promise rejections automatically
+    Honeybadger.configure({
+      apiKey: "hbp_LKgZxqIdsXDu7G99pJD5F4hkB4HpZX0E33Oz", // Project-specific API key for error reporting
+      environment: "production", // Tags errors with the deployment environment
+      // Forces error reporting even when running locally as a file,
+      // bypassing the default development environment check
+      reportData: true
+    });
+  </script>
 </head>
 <body>
   <header class="header">
@@ -29,4 +45,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
