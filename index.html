@@ -14,7 +14,10 @@
     // This captures uncaught exceptions and unhandled promise rejections automatically
     Honeybadger.configure({
       apiKey: "hbp_LKgZxqIdsXDu7G99pJD5F4hkB4HpZX0E33Oz", // Project-specific API key for error reporting
-      environment: "production" // Tags errors with the deployment environment
+      environment: "production", // Tags errors with the deployment environment
+      // Forces error reporting even when running locally as a file,
+      // bypassing the default development environment check
+      reportData: true
     });
   </script>
 </head>
