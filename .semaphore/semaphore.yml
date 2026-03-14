@@ -1,0 +1,26 @@
+version: v1.0
+name: Initial Pipeline
+agent:
+  machine:
+    type: f1-standard-2
+    os_image: ubuntu2204
+blocks:
+  - name: Validate project files
+    task:
+      jobs:
+        - name: Check required files
+          commands:
+            - '# Pull the code from GitHub onto the Semaphore machine'
+            - checkout
+            - '# Verify all required project files exist before anything else runs'
+            - '# If any file is missing, the pipeline fails immediately with a clear message'
+            - '# This catches accidental deletions before they reach a human reviewer'
+            - echo "Checking required files..."
+            - '# test -f checks if a file exists. If it does, print a checkmark.'
+            - '# If it doesn''t, print an error and exit 1 (exit 1 = pipeline fails)'
+            - test -f index.html && echo "✓ index.html found" || (echo "✗ index.html MISSING - pipeline failed" && exit 1)
+            - test -f script.js && echo "✓ script.js found" || (echo "✗ script.js MISSING - pipeline failed" && exit 1)
+            - test -f styles.css && echo "✓ styles.css found" || (echo "✗ styles.css MISSING - pipeline failed" && exit 1)
+            - test -f CLAUDE.md && echo "✓ CLAUDE.md found" || (echo "✗ CLAUDE.md MISSING - pipeline failed" && exit 1)
+            - '# If we get here, all files passed'
+            - echo "All required files present - pipeline passed!"
