@@ -17,6 +17,33 @@
       environment: "production" // Tags errors with the deployment environment
     });
   </script>
+
+  <!-- Datadog Real User Monitoring (RUM) -->
+  <!-- RUM captures real user sessions including page loads, resource timing, user clicks, -->
+  <!-- long-running tasks, and optional session replays to help diagnose frontend performance issues -->
+  <script>
+    (function(h,o,u,n,d) {
+      h = h[d] = h[d] || { q: [], onReady: function (c) { h.q.push(c) } }
+      d = o.createElement(u); d.async = 1; d.src = n; d.crossOrigin=''
+      n = o.getElementsByTagName(u)[0]; n.parentNode.insertBefore(d, n)
+    })(window, document, 'script', 'https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js', 'DD_RUM')
+
+    window.DD_RUM.onReady(function () {
+      window.DD_RUM.init({
+        applicationId: '9ec2d6cd-c7c8-4512-9486-fd9181a9296e',
+        clientToken: 'pub1226265f7603d0baddb6ab4d3e25176a',
+        site: 'us5.datadoghq.com',
+        service: 'spotlight-practice1',
+        env: 'production',
+        version: '1.0.0',
+        sessionSampleRate: 100,          // capture 100% of sessions
+        sessionReplaySampleRate: 20,     // capture 20% of sessions with replay
+        trackResources: true,            // Enable Resource tracking
+        trackUserInteractions: true,     // Enable Action tracking
+        trackLongTasks: true,            // Enable Long Tasks tracking
+      });
+    });
+  </script>
 </head>
 <body>
   <header class="header">
