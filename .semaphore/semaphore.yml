@@ -1,0 +1,41 @@
+# Semaphore CI pipeline for Employee Directory (Spotlight)
+# Runs on every push to verify that all required project files are present.
+
+# Schema version — v1.0 is the current stable pipeline spec.
+version: v1.0
+
+# Human-readable name shown in the Semaphore dashboard.
+name: Employee Directory CI
+
+# The agent section defines the machine type and OS image used to run jobs.
+agent:
+  machine:
+    type: e1-standard-2        # 2-vCPU shared machine (sufficient for lightweight checks)
+    os_image: ubuntu2004       # Ubuntu 20.04 base image
+
+# Blocks are the top-level grouping of work in a pipeline.
+# Each block runs in a clean environment after checking out the code.
+blocks:
+  # ------------------------------------------------------------------
+  # Block: Verify required files
+  # Ensures the four essential project files exist in the repository.
+  # ------------------------------------------------------------------
+  - name: Verify required files
+    task:
+      # Prologue runs before every job in this block.
+      # checkout fetches the repository at the current commit.
+      prologue:
+        commands:
+          - checkout  # Semaphore built-in: clones the repo and checks out the triggering commit
+
+      # Each job runs independently. We use a single job here to
+      # check that all required files are present.
+      jobs:
+        - name: Check project files exist
+          commands:
+            # Verify each required file exists; exit with an error if any is missing.
+            - test -f index.html  || { echo "ERROR: index.html is missing"; exit 1; }
+            - test -f script.js   || { echo "ERROR: script.js is missing";  exit 1; }
+            - test -f styles.css  || { echo "ERROR: styles.css is missing"; exit 1; }
+            - test -f CLAUDE.md   || { echo "ERROR: CLAUDE.md is missing";  exit 1; }
+            - echo "All required files are present."
